@@ -1,12 +1,7 @@
 import com.elbekd.bot.Bot
 import com.elbekd.bot.model.toChatId
-import com.elbekd.bot.server
 import com.elbekd.bot.types.BotCommand
-import com.elbekd.bot.types.BotCommandScope
-import com.elbekd.bot.types.KeyboardButton
-import com.elbekd.bot.types.KeyboardButtonPollType
-import com.elbekd.bot.types.ParseMode
-import com.elbekd.bot.types.ReplyKeyboardMarkup
+import com.elbekd.bot.util.Action
 import kotlin.random.Random
 
 fun main() {
@@ -15,6 +10,12 @@ fun main() {
 	val bot = Bot.createPolling(token, username)
 
 	bot.onCommand("/start") { (msg, _) ->
+		bot.sendChatAction(
+			msg.chat.id.toChatId(),
+			action = Action.FindLocation,
+			msg.messageThreadId
+		)
+		Thread.sleep(1000)
 		bot.sendMessage(
 			chatId = msg.chat.id.toChatId(),
 			text = "Hi"
@@ -23,6 +24,12 @@ fun main() {
 	}
 
 	bot.onCommand("/churka") { (msg, _) ->
+		bot.sendChatAction(
+			msg.chat.id.toChatId(),
+			action = Action.FindLocation,
+			msg.messageThreadId
+		)
+		Thread.sleep(1000)
 		val random = Random.nextInt(usernames.size)
 		lastIndex = random
 		bot.sendMessage(
@@ -32,6 +39,12 @@ fun main() {
 	}
 
 	bot.onCommand("/lastchurka") { (msg, _) ->
+		bot.sendChatAction(
+			msg.chat.id.toChatId(),
+			action = Action.FindLocation,
+			msg.messageThreadId
+		)
+		Thread.sleep(1000)
 		if (lastIndex != -1) {
 			bot.sendMessage(
 				msg.chat.id.toChatId(),
@@ -41,6 +54,14 @@ fun main() {
 		else bot.sendMessage(
 			msg.chat.id.toChatId(),
 			"Сначала выбери чурку, долбаёб"
+		)
+	}
+
+	bot.onCommand("/type") {(msg, _) ->
+		bot.sendChatAction(
+			msg.chat.id.toChatId(),
+			action = Action.FindLocation,
+			msg.messageThreadId
 		)
 	}
 
@@ -68,6 +89,9 @@ fun main() {
 				),
 				BotCommand(
 					"/lastchurka", "быстро в газовую камеру"
+				),
+				BotCommand(
+					"/type", "бебебе с бабаба"
 				)
 			)
 		)
