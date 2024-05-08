@@ -1,75 +1,22 @@
-import com.elbekd.bot.Bot
+import com.elbekd.bot.*
 import com.elbekd.bot.model.toChatId
 import com.elbekd.bot.types.BotCommand
-import com.elbekd.bot.util.Action
-import kotlin.random.Random
+import com.elbekd.bot.util.SendingString
+import kotlinx.coroutines.*
+import java.time.LocalDateTime
 
-fun main() {
+suspend fun main() = coroutineScope{
 	val token = BOT_TOKEN
 	val username = BOT_USERNAME
 	val bot = Bot.createPolling(token, username)
 
 	bot.onCommand("/start") { (msg, _) ->
-		bot.sendChatAction(
-			msg.chat.id.toChatId(),
-			action = Action.FindLocation,
-			msg.messageThreadId
-		)
-		Thread.sleep(1000)
-		bot.sendMessage(
-			chatId = msg.chat.id.toChatId(),
-			text = "Hi"
-		)
-
-	}
-
-	bot.onCommand("/churka") { (msg, _) ->
-		bot.sendChatAction(
-			msg.chat.id.toChatId(),
-			action = Action.FindLocation,
-			msg.messageThreadId
-		)
-		Thread.sleep(1000)
-		val random = Random.nextInt(usernames.size)
-		lastIndex = random
-		bot.sendMessage(
-			msg.chat.id.toChatId(),
-			"Я думаю, что чурка - ${usernames[random]}"
-		)
-	}
-
-	bot.onCommand("/lastchurka") { (msg, _) ->
-		bot.sendChatAction(
-			msg.chat.id.toChatId(),
-			action = Action.FindLocation,
-			msg.messageThreadId
-		)
-		Thread.sleep(1000)
-		if (lastIndex != -1) {
+		repeat(1) {
 			bot.sendMessage(
-				msg.chat.id.toChatId(),
-				"${usernames[lastIndex]}, а ну быстро в газовую камеру"
+				chatId = msg.chat.id.toChatId(),
+				text = msg.chat.id.toString()
 			)
 		}
-		else bot.sendMessage(
-			msg.chat.id.toChatId(),
-			"Сначала выбери чурку, долбаёб"
-		)
-	}
-
-	bot.onCommand("/type") {(msg, _) ->
-		bot.sendChatAction(
-			msg.chat.id.toChatId(),
-			action = Action.FindLocation,
-			msg.messageThreadId
-		)
-	}
-
-	bot.onCommand("/date") { (msg, _) ->
-		bot.sendMessage(
-			msg.chat.id.toChatId(),
-			longToDate(msg.date)
-		)
 	}
 
 	bot.onCommand("/set") { (msg, _) ->
@@ -79,19 +26,10 @@ fun main() {
 					command = "/start", description = "this is cringe"
 				),
 				BotCommand(
-					command = "/set", description = "setting commands"
+					command = "/set", description = "commands setter"
 				),
 				BotCommand(
-					command = "/date", "u now"
-				),
-				BotCommand(
-					"/churka", "who is churka?"
-				),
-				BotCommand(
-					"/lastchurka", "быстро в газовую камеру"
-				),
-				BotCommand(
-					"/type", "бебебе с бабаба"
+					"/nextpost", "когда следующий пост?"
 				)
 			)
 		)
@@ -100,5 +38,49 @@ fun main() {
 			text = "Commands installed"
 		)
 	}
+
+	bot.onCommand("/nextpost") { (msg, _) ->
+		if (getPostTimeList().isNotEmpty()) {
+			val time = getPostTimeList()[0]
+			var hours = ""
+			var minutes = ""
+			for (i in 0..<2) {
+				when (i) {
+					0 -> hours = time.toString().split("T")[1].split(":")[i]
+					1 -> minutes = time.toString().split("T")[1].split(":")[i]
+				}
+			}
+			bot.sendMessage(
+				msg.chat.id.toChatId(),
+				"Следующий пост в $hours:$minutes"
+			)
+		}
+		else bot.sendMessage(
+			msg.chat.id.toChatId(),
+			"Новых постов нет"
+		)
+	}
+
+	bot.onMessage { msg ->
+		if (msg.chat.id == BOT_CHAT_ID){
+			if (msg.photo.isNotEmpty()) {
+				addItem(db, msg.photo[0])
+			}
+		}
+	}
+
+	launch {
+		while (true) {
+			delay(60000L)
+			if (getPostTimeList()[0] < LocalDateTime.now().plusHours(3)) {
+				bot.sendPhoto(
+					POST_CHAT_ID.toChatId(),
+					SendingString(postItem(db))
+				)
+				deleteItem()
+			}
+		}
+	}
+
 	bot.start()
 }
