@@ -1,19 +1,19 @@
 import com.elbekd.bot.types.PhotoSize
 import com.mongodb.client.model.Filters
 import com.mongodb.kotlin.client.coroutine.MongoCollection
-import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import java.time.LocalDateTime
 
 data class Posts(
 	val fileId: String,
-	val postTime: LocalDateTime
+	val postTime: LocalDateTime,
+	val fileUniqueId: String
 )
-fun getPostsCollection(database: MongoDatabase): MongoCollection<Posts> {
-	return database.getCollection<Posts>(collectionName)
+fun getPostsCollection(): MongoCollection<Posts> {
+	return db.getCollection<Posts>(collectionName)
 }
 
-suspend fun getNewPostTime(database: MongoDatabase): LocalDateTime {
-	val collection = getPostsCollection(database)
+suspend fun getNewPostTime(): LocalDateTime {
+	val collection = getPostsCollection()
 	var newPostTime = LocalDateTime.now().plusHours(4)
 	if (collection.countDocuments(client.startSession()).toInt() != 0) {
 		val listOfPosts = mutableListOf<Posts>()
@@ -26,12 +26,13 @@ suspend fun getNewPostTime(database: MongoDatabase): LocalDateTime {
 	return newPostTime
 }
 
-suspend fun addItem(database: MongoDatabase, img: PhotoSize) {
+suspend fun addItem(img: PhotoSize) {
 
-	val collection = getPostsCollection(database)
+	val collection = getPostsCollection()
 	val item = Posts(
 		fileId = img.fileId,
-		postTime = getNewPostTime(database)
+		postTime = getNewPostTime(),
+		fileUniqueId = img.fileUniqueId
 	)
 	collection.insertOne(item).also {
 		println("Item added with id - ${it.insertedId}")
@@ -40,7 +41,7 @@ suspend fun addItem(database: MongoDatabase, img: PhotoSize) {
 }
 
 suspend fun getPostTimeList(): List<LocalDateTime> {
-	val collection = getPostsCollection(db)
+	val collection = getPostsCollection()
 	val listOfPosts = mutableListOf<Posts>()
 	val listOfDateTimes = mutableListOf<LocalDateTime>()
 	val flowResult = collection.find(Filters.empty())
@@ -56,8 +57,8 @@ suspend fun getPostTimeList(): List<LocalDateTime> {
 
 	return listOfDateTimes
 }
-suspend fun postItem(database: MongoDatabase): String {
-	val collection = getPostsCollection(database)
+suspend fun postItem(): String {
+	val collection = getPostsCollection()
 	return if (collection.countDocuments(client.startSession()).toInt() != 0) {
 		val str = mutableListOf<Posts>()
 		val result = collection.find(Filters.eq("postTime", getPostTimeList()[0]))
@@ -70,7 +71,7 @@ suspend fun postItem(database: MongoDatabase): String {
 }
 
 suspend fun deleteItem() {
-	val collection = getPostsCollection(db)
+	val collection = getPostsCollection()
 	if (collection.countDocuments(client.startSession()).toInt() != 0) {
 		collection.deleteOne(Filters.eq("postTime", getPostTimeList()[0]))
 	}

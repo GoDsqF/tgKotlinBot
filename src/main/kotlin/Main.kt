@@ -5,6 +5,7 @@ import com.elbekd.bot.util.SendingString
 import kotlinx.coroutines.*
 import java.time.LocalDateTime
 
+
 suspend fun main() = coroutineScope{
 	val token = BOT_TOKEN
 	val username = BOT_USERNAME
@@ -17,6 +18,13 @@ suspend fun main() = coroutineScope{
 				text = msg.chat.id.toString()
 			)
 		}
+	}
+
+	bot.onCommand("/print") { (msg, _) ->
+		bot.sendPhoto(
+			msg.chat.id.toChatId(),
+			SendingString(msg.text?.split(" ")?.get(1) ?: "photo")
+		)
 	}
 
 	bot.onCommand("/set") { (msg, _) ->
@@ -64,7 +72,7 @@ suspend fun main() = coroutineScope{
 	bot.onMessage { msg ->
 		if (msg.chat.id == BOT_CHAT_ID){
 			if (msg.photo.isNotEmpty()) {
-				addItem(db, msg.photo[0])
+				addItem(msg.photo[0])
 			}
 		}
 	}
@@ -75,7 +83,7 @@ suspend fun main() = coroutineScope{
 			if (getPostTimeList()[0] < LocalDateTime.now().plusHours(3)) {
 				bot.sendPhoto(
 					POST_CHAT_ID.toChatId(),
-					SendingString(postItem(db))
+					SendingString(postItem())
 				)
 				deleteItem()
 			}
