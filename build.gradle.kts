@@ -27,6 +27,9 @@ dependencies {
 
     // MongoDB Kotlin driver dependency
     implementation("org.mongodb:mongodb-driver-kotlin-coroutine:4.10.1")
+
+    implementation("org.slf4j:slf4j-api:2.0.13")
+    implementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.23.1")
 }
 
 tasks.test {
