@@ -1,6 +1,7 @@
 import com.elbekd.bot.types.PhotoSize
 import com.mongodb.client.model.Filters
 import com.mongodb.kotlin.client.coroutine.MongoCollection
+import kotlinx.coroutines.flow.count
 import java.time.LocalDateTime
 
 data class Posts(
@@ -40,6 +41,23 @@ suspend fun addItem(img: PhotoSize) {
 
 }
 
+suspend fun collectionCount(): Int {
+	val collection = getPostsCollection()
+	return collection.find(Filters.empty()).count()
+}
+
+suspend fun getPostsList(): List<Posts> {
+	val collection = getPostsCollection()
+	val listOfPosts = mutableListOf<Posts>()
+	val flowResult = collection.find(Filters.empty())
+
+	flowResult.collect {
+		listOfPosts.add(it)
+	}
+	listOfPosts.sortWith(compareBy(Posts::postTime))
+
+	return listOfPosts.reversed()
+}
 suspend fun getPostTimeList(): List<LocalDateTime> {
 	val collection = getPostsCollection()
 	val listOfPosts = mutableListOf<Posts>()
@@ -56,6 +74,38 @@ suspend fun getPostTimeList(): List<LocalDateTime> {
 	listOfDateTimes.sorted()
 
 	return listOfDateTimes
+}
+
+suspend fun getPostTimeString(post: Posts): String {
+	var hours = ""
+	var minutes = ""
+	if (getPostTimeList().isNotEmpty()) {
+		val time = post.postTime
+		for (i in 0..<2) {
+			when (i) {
+				0 -> hours = time.toString().split("T")[1].split(":")[i]
+				1 -> minutes = time.toString().split("T")[1].split(":")[i]
+			}
+		}
+	}
+	return "${hours.toInt() - 5}:$minutes"
+}
+
+suspend fun getPostDateString(post: Posts): String {
+	var day = ""
+	var month = ""
+	var year = ""
+	if (getPostTimeList().isNotEmpty()) {
+		val time = post.postTime
+		for (i in 0..<3) {
+			when (i) {
+				0 -> year = time.toString().split("T")[0].split("-")[i]
+				1 -> month = time.toString().split("T")[0].split("-")[i]
+				2 -> day = time.toString().split("T")[0].split("-")[i]
+			}
+		}
+	}
+	return "${day.toInt() - 1}.$month.$year"
 }
 suspend fun postItem(): String {
 	val collection = getPostsCollection()

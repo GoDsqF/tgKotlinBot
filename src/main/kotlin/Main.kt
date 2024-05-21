@@ -38,6 +38,9 @@ suspend fun main() = coroutineScope{
 				),
 				BotCommand(
 					"/nextpost", "когда следующий пост?"
+				),
+				BotCommand(
+					"/count", "сколько осталось?"
 				)
 			)
 		)
@@ -66,6 +69,21 @@ suspend fun main() = coroutineScope{
 		else bot.sendMessage(
 			msg.chat.id.toChatId(),
 			"Новых постов нет"
+		)
+	}
+
+	bot.onCommand("/count") { (msg, _) ->
+		if (getPostTimeList().isNotEmpty()) {
+			bot.sendMessage(
+				msg.chat.id.toChatId(),
+				"Количество постов в очереди: ${collectionCount() + 1}\n" +
+						"Последний пост будет отправлен ${getPostDateString(getPostsList()[0])} " +
+						"в ${getPostTimeString(getPostsList()[0])}"
+			)
+		}
+		else bot.sendMessage(
+			msg.chat.id.toChatId(),
+			"Постов в очереди нет"
 		)
 	}
 
